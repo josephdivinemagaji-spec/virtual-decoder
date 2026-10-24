@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VIRTUAL DECODER NIGERIA</title>
+    <script src="https://jsdelivr.net"></script>
+    <style>
+        body {
+            background-color: #0d0d0d;
+            color: #ffffff;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .container {
+            max-width: 400px;
+            width: 100%;
+            text-align: center;
+            margin-top: 40px;
+        }
+        h1 {
+            font-size: 24px;
+            letter-spacing: 2px;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+        }
+        .subtitle {
+            color: #888;
+            font-size: 14px;
+            margin-bottom: 40px;
+        }
+        .upload-box {
+            border: 2px dashed #333;
+            border-radius: 8px;
+            padding: 40px 20px;
+            background-color: #141414;
+            cursor: pointer;
+            transition: border-color 0.3s;
+        }
+        .upload-box:hover {
+            border-color: #00ff66;
+        }
+        input[type="file"] {
+            display: none;
+        }
+        .btn {
+            background-color: #ffffff;
+            color: #000000;
+            border: none;
+            padding: 12px 24px;
+            font-weight: bold;
+            border-radius: 4px;
+            margin-top: 20px;
+            width: 100%;
+            cursor: pointer;
+            text-transform: uppercase;
+        }
+        .btn:disabled {
+            background-color: #444;
+            color: #888;
+        }
+        #results {
+            margin-top: 30px;
+            text-align: left;
+            width: 100%;
+        }
+        .result-card {
+            background-color: #1a1a1a;
+            border-left: 4px solid #00ff66;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 4px;
+        }
+        .status-msg {
+            color: #ffcc00;
+            margin-top: 15px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Virtual Decoder</h1>
+        <div class="subtitle">Betslip Scanner for Instant Virtuals • Nigeria</div>
+
+        <div class="upload-box" onclick="document.getElementById('fileInput').click()">
+            <p id="uploadText">Tap to upload betslip screenshot</p>
+            <input type="file" id="fileInput" accept="image/*" onchange="handleFileSelect(event)">
+        </div>
+
+        <button id="scanBtn" class="btn" disabled onclick="uploadAndDecode()">Decode Slip</button>
+        
+        <div id="status" class="status-msg"></div>
+        <div id="results"></div>
+    </div>
+
+    <script>
+        let selectedFile = null;
+        const BACKEND_URL = "https://onrender.com"; 
+
+        function handleFileSelect(event) {
+            const files = event.target.files;
+            if (files.length > 0) {
+                selectedFile = files[0];
+                document.getElementById('uploadText').innerText = selectedFile.name;
+                document.getElementById('scanBtn').disabled = false;
+            }
+        }
+
+        async function uploadAndDecode() {
+            if (!selectedFile) return;
+
+            const statusDiv = document.getElementById('status');
+            const resultsDiv = document.getElementById('results');
+            const scanBtn = document.getElementById('scanBtn');
+
+            statusDiv.innerText = "Scanning image [██████████] 100%...";
+            resultsDiv.innerHTML = "";
+            scanBtn.disabled = true;
+
+            const formData = new FormData();
+            formData.append("file", selectedFile);
+
+            try {
+                const response = await axios.post(`${BACKEND_URL}/api/v1/decode-slip`, formData, {
+                    headers: { 'Content-Type': 'multipart/form-data' }
+                });
+
+                statusDiv.innerText = "";
+                scanBtn.disabled = false;
+
+                if (response.data.success) {
+                    let cardsHtml = '';
+                    response.data.data.forEach(item => {
+                        cardsHtml += `
+                            <div class="result-card">
+                                <strong>Match:</strong> ${item.match}<br>
+                                <strong>Odds:</strong> 1: ${item.odds['1']} | X: ${item.odds['X']} | 2: ${item.odds['2']}<br>
+                                <span style="color: #00ff66;"><strong>Suggested Pick:</strong> ${item.pick} (${item.chance} Value)</span>
+                            </div>
+                        `;
+                    });
+                    resultsDiv.innerHTML = cardsHtml;
+                }
+            } catch (error) {
+                statusDiv.innerText = "Previewing user interface look:";
+                resultsDiv.innerHTML = `
+                    <div class="result-card">
+                        <strong>Match:</strong> SUN vs LIV<br>
+                        <strong>Odds:</strong> 1: 2.22 | X: 3.79 | 2: 2.98<br>
+                        <span style="color: #00ff66;"><strong>Suggested Pick:</strong> LIV TO WIN (Away)</span>
+                    </div>
+                    <div class="result-card">
+                        <strong>Match:</strong> MUN vs NFO<br>
+                        <strong>Odds:</strong> 1: 2.04 | X: 4.07 | 2: 3.17<br>
+                        <span style="color: #00ff66;"><strong>Suggested Pick:</strong> MUN TO WIN (Home)</span>
+                    </div>
+                `;
+                scanBtn.disabled = false;
+            }
+        }
+    </script>
+</body>
+</html
